@@ -42,8 +42,8 @@ class DriveTrain(object):
         
         try:
             input_data = {
-                "angle" : 0, 
-                "force" : 0
+                "x" : 0, 
+                "y" : 0
             }
 
             #getting all the query parameters out of the POST url

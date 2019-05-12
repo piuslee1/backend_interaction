@@ -117,6 +117,23 @@ class Arm(object):
 
 
 
+
+#Gives endpoints for the arm
+class Imu(object):
+    def __init__(self): 
+        #self.pub = rospy.Subscriber('imu', String, self.update_data)
+        self.imu_data = "data"
+
+    def update_data(self, imu_data):
+        self.imu_data = imu_data.data
+
+    def on_get(self, req, resp):
+        query = falcon.uri.decode(req.query_string)
+
+        resp.status = falcon.HTTP_200  # This is the default status
+        resp.body = self.imu_data
+
+
 if(not production):
     from falcon_cors import CORS
     public_cors = CORS(allow_all_origins=True, allow_methods_list=["GET","PATCH","POST","DELETE"])
@@ -126,7 +143,8 @@ else:
 
 drive_train = DriveTrain()
 arm = Arm()
+imu = Imu()
 
 app.add_route('/drive_train', drive_train)
 app.add_route('/arm', arm)
-
+app.add_route('/imu_data', imu)

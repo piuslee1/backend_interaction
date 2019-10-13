@@ -4,6 +4,7 @@ import base64
 import numpy as np
 import rospy
 from std_msgs.msg import String
+import threading
 
 
 """ 
@@ -26,7 +27,7 @@ production = True
 
 
 pub = rospy.Publisher('motor_control', String, queue_size=10)
-#rospy.init_node('motor_control_api', anonymous=True)
+threading.Thread(target=lambda: rospy.init_node('motor_control_api', anonymous=True, disable_signals=True)).start()
 
 
 #Gives direction to the drive train
@@ -49,9 +50,10 @@ class DriveTrain(object):
 
             #getting all the query parameters out of the POST url
             for each in queries:
-                name, data = each.split("=")
-                if(name in drive_train):
-                    drive_train[name] = float(data)
+                if("=" in each):
+                    name, data = each.split("=")
+                    if(name in drive_train):
+                        drive_train[name] = float(data)
 
 
             
@@ -68,7 +70,7 @@ class DriveTrain(object):
         
         except Exception as e:
             resp.status = falcon.HTTP_500  # Error
-            resp.body = (json.dumps({"message":"something failed, check error", "error":e.strerror}))
+            resp.body = (json.dumps({"message":"something failed, check error", "error":e.error}))
 
 
 
@@ -96,9 +98,10 @@ class Arm(object):
 
             #getting all the query parameters out of the POST url
             for each in queries:
-                name, data = each.split("=")
-                if(name in arm_positions):
-                    arm_positions[name] = float(data)
+                if("=" in each):
+                    name, data = each.split("=")
+                    if(name in arm_positions):
+                        arm_positions[name] = float(data)
 
 
             message = json.dumps({"arm_positions":arm_positions})
@@ -113,7 +116,7 @@ class Arm(object):
         
         except Exception as e:
             resp.status = falcon.HTTP_500  # Error
-            resp.body = (json.dumps({"message":"something failed, check error", "error":e.strerror}))
+            resp.body = (json.dumps({"message":"something failed, check error", "error":e.error}))
 
 
 

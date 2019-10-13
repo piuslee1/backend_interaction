@@ -2,8 +2,8 @@ import falcon
 import json
 import base64
 import numpy as np
-#import rospy
-#from std_msgs.msg import String
+import rospy
+from std_msgs.msg import String
 
 
 """ 
@@ -22,16 +22,17 @@ POST /arm
 
 """
 
-production = False
+production = True 
 
+
+pub = rospy.Publisher('motor_control', String, queue_size=10)
+#rospy.init_node('motor_control_api', anonymous=True)
 
 
 #Gives direction to the drive train
 class DriveTrain(object):
-    def __init__(self):
-        #self.pub = rospy.Publisher('drive_train', String, queue_size=10)
-        #rospy.init_node('drive_train_api', anonymous=True)
-        pass
+    def __init__(self, pub):
+        self.pub = pub
 
     def on_post(self, req, resp):
         query = falcon.uri.decode(req.query_string)
@@ -41,7 +42,7 @@ class DriveTrain(object):
         package = {}
         
         try:
-            input_data = {
+            drive_train = {
                 "x" : 0, 
                 "y" : 0
             }
@@ -49,11 +50,12 @@ class DriveTrain(object):
             #getting all the query parameters out of the POST url
             for each in queries:
                 name, data = each.split("=")
-                if(name in input_data):
-                    input_data[name] = float(data)
+                if(name in drive_train):
+                    drive_train[name] = float(data)
 
 
-            message = json.dumps(input_data)
+            
+            message = json.dumps({"drive_train":drive_train})
 
             #rospy.loginfo(message)
             #self.pub.publish(message)
@@ -72,10 +74,8 @@ class DriveTrain(object):
 
 #Gives endpoints for the arm
 class Arm(object):
-    def __init__(self): 
-        #self.pub = rospy.Publisher('arm', String, queue_size=10)
-        #rospy.init_node('arm_api', anonymous=True)
-        pass
+    def __init__(self, pub): 
+        self.pub = pub 
 
     def on_post(self, req, resp):
         query = falcon.uri.decode(req.query_string)
@@ -85,7 +85,7 @@ class Arm(object):
         package = {}
         
         try:
-            input_data = {
+            arm_positions = {
                 "x" : 0, 
                 "y" : 0, #up down
                 "z" : 0,
@@ -97,14 +97,14 @@ class Arm(object):
             #getting all the query parameters out of the POST url
             for each in queries:
                 name, data = each.split("=")
-                if(name in input_data):
-                    input_data[name] = float(data)
+                if(name in arm_positions):
+                    arm_positions[name] = float(data)
 
 
-            message = json.dumps(input_data)
+            message = json.dumps({"arm_positions":arm_positions})
 
-            #rospy.loginfo(message)
-            #self.pub.publish(message)
+            rospy.loginfo(message)
+            self.pub.publish(message)
             print(message)
 
             resp.status = falcon.HTTP_200  # This is the default status
@@ -121,7 +121,7 @@ class Arm(object):
 #Gives endpoints for the arm
 class Imu(object):
     def __init__(self): 
-        #self.pub = rospy.Subscriber('imu', String, self.update_data)
+        self.pub = rospy.Subscriber('imu', String, self.update_data)
         self.imu_data = "data"
 
     def update_data(self, imu_data):
@@ -141,8 +141,8 @@ if(not production):
 else:
     app = falcon.API()
 
-drive_train = DriveTrain()
-arm = Arm()
+drive_train = DriveTrain(pub)
+arm = Arm(pub)
 imu = Imu()
 
 app.add_route('/drive_train', drive_train)

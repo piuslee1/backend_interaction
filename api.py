@@ -59,9 +59,8 @@ class DriveTrain(object):
             
             message = json.dumps({"drive_train":drive_train})
 
-            #rospy.loginfo(message)
-            #self.pub.publish(message)
-            print(message)
+            rospy.loginfo(message)
+            self.pub.publish(message)
 
 
             resp.status = falcon.HTTP_200  # This is the default status
@@ -87,7 +86,7 @@ class Arm(object):
         package = {}
         
         try:
-            arm_positions = {
+            arm = {
                 "x" : 0, 
                 "y" : 0, #up down
                 "z" : 0,
@@ -100,15 +99,14 @@ class Arm(object):
             for each in queries:
                 if("=" in each):
                     name, data = each.split("=")
-                    if(name in arm_positions):
-                        arm_positions[name] = float(data)
+                    if(name in arm):
+                        arm[name] = float(data)
 
 
-            message = json.dumps({"arm_positions":arm_positions})
+            message = json.dumps({"arm":arm})
 
             rospy.loginfo(message)
             self.pub.publish(message)
-            print(message)
 
             resp.status = falcon.HTTP_200  # This is the default status
             resp.body = (json.dumps({"message":"successfully published"}))

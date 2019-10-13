@@ -23,7 +23,7 @@ POST /arm
 
 """
 
-production = True 
+production = False
 
 
 pub = rospy.Publisher('motor_control', String, queue_size=10)

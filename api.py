@@ -3,7 +3,7 @@ import json
 import base64
 import numpy as np
 import rospy
-from std_msgs.msg import String
+from std_msgs.msg import String, Float64MultiArray
 import threading
 
 
@@ -26,8 +26,9 @@ POST /arm
 production = False
 
 
-pub = rospy.Publisher('motor_control', String, queue_size=10)
-threading.Thread(target=lambda: rospy.init_node('motor_control_api', anonymous=True, disable_signals=True)).start()
+drive_pub = rospy.Publisher('drive_train', Float64MultiArray, queue_size=10)
+arm_pub = rospy.Publisher('arm', Float64MultiArray, queue_size=10)
+threading.Thread(target=lambda: rospy.init_node('movement', anonymous=True, disable_signals=True)).start()
 
 
 #Gives direction to the drive train
@@ -56,12 +57,10 @@ class DriveTrain(object):
                         drive_train[name] = float(data)
 
 
-            
-            message = json.dumps({"drive_train":drive_train})
+            message = Float64MultiArray()
+            message.data = [drive_train["x"], drive_train["y"]]
 
-            rospy.loginfo(message)
             self.pub.publish(message)
-
 
             resp.status = falcon.HTTP_200  # This is the default status
             resp.body = (json.dumps({"message":"successfully published"}))
@@ -69,7 +68,7 @@ class DriveTrain(object):
         
         except Exception as e:
             resp.status = falcon.HTTP_500  # Error
-            resp.body = (json.dumps({"message":"something failed, check error", "error":e.error}))
+            resp.body = (json.dumps({"message":"something failed, check error", "error":e}))
 
 
 
@@ -86,6 +85,7 @@ class Arm(object):
         package = {}
         
         try:
+
             arm = {
                 "x" : 0, 
                 "y" : 0, #up down
@@ -102,10 +102,10 @@ class Arm(object):
                     if(name in arm):
                         arm[name] = float(data)
 
+            
+            messsage = Float64MultiArray()
+            message.data = [arm["x"], arm["y"], arm["z"], arm["x_angle"], arm["y_angle"], arm["rotation"]]
 
-            message = json.dumps({"arm":arm})
-
-            rospy.loginfo(message)
             self.pub.publish(message)
 
             resp.status = falcon.HTTP_200  # This is the default status
@@ -142,8 +142,8 @@ if(not production):
 else:
     app = falcon.API()
 
-drive_train = DriveTrain(pub)
-arm = Arm(pub)
+drive_train = DriveTrain(drive_pub)
+arm = Arm(arm_pub)
 imu = Imu()
 
 app.add_route('/drive_train', drive_train)

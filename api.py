@@ -27,6 +27,7 @@ production = False
 
 
 pub = rospy.Publisher('motor_control', String, queue_size=10)
+pub2 = rospy.Publisher('yeet', String, queue_size=10)
 threading.Thread(target=lambda: rospy.init_node('motor_control_api', anonymous=True, disable_signals=True)).start()
 
 
@@ -143,7 +144,7 @@ else:
     app = falcon.API()
 
 drive_train = DriveTrain(pub)
-arm = Arm(pub)
+arm = Arm(pub2)
 imu = Imu()
 
 app.add_route('/drive_train', drive_train)
